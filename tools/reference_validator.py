@@ -166,8 +166,6 @@ class ReferenceValidator:
 
     def is_template(self, value: str) -> bool:
         """Check if value is a Jinja2 template expression."""
-        import re
-
         # Match template expressions like {{ ... }}
         return bool(re.search(r"\{\{.*?\}\}", value))
 
@@ -419,7 +417,7 @@ class ReferenceValidator:
         for pattern in ["*.yaml", "*.yml"]:
             yaml_files.extend(self.config_dir.glob(pattern))
 
-        # Skip blueprints directory - these are templates with !input tags that are expected
+        # Skip blueprints directory - these are templates with !input tags
         return yaml_files
 
     def validate_all(self) -> bool:

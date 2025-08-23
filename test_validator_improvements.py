@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
 """Unit tests for validator improvements including blueprint support and validation."""
 
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,8 +24,6 @@ class TestValidatorImprovements(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test fixtures."""
-        import shutil
-
         shutil.rmtree(self.temp_dir)
 
     def test_blueprint_automation_validation(self):
@@ -81,7 +79,7 @@ class TestValidatorImprovements(unittest.TestCase):
         self.assertEqual(len(self.yaml_validator.errors), 0)
 
     def test_singular_triggers_actions_validation(self):
-        """Test that automations with singular triggers/actions still pass validation."""
+        """Test automations with singular triggers/actions still pass."""
         automation_with_singulars = [
             {
                 "id": "singular_test",

@@ -152,11 +152,13 @@ class YAMLValidator:
                     continue
 
                 # Check required fields (both singular and plural forms are valid)
-                # Blueprint automations use 'use_blueprint' instead of direct triggers/actions
+                # Blueprint automations use 'use_blueprint' instead of
+                # direct triggers/actions
                 if "use_blueprint" not in automation:
                     if "trigger" not in automation and "triggers" not in automation:
                         self.errors.append(
-                            f"{file_path}: Automation {i} missing 'trigger' or 'triggers'"
+                            f"{file_path}: Automation {i} missing 'trigger' "
+                            f"or 'triggers'"
                         )
                         all_valid = False
                     if "action" not in automation and "actions" not in automation:

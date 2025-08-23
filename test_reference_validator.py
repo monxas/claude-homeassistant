@@ -425,7 +425,9 @@ class TestReferenceValidatorUUID(unittest.TestCase):
                 "alias": "Complex Mixed Automation",
                 "trigger": {
                     "platform": "template",
-                    "value_template": "{{ states('sensor.complex') == 'on' }}",  # Template, should be ignored
+                    "value_template": (
+                        "{{ states('sensor.complex') == 'on' }}"  # Template, ignored
+                    ),
                 },
                 "condition": [
                     {
@@ -444,7 +446,9 @@ class TestReferenceValidatorUUID(unittest.TestCase):
                     {
                         "service": "notify.send",
                         "data": {
-                            "message": "{{ now() }} - Motion detected"  # Template in data
+                            "message": (
+                                "{{ now() }} - Motion detected"  # Template in data
+                            )
                         },
                     },
                 ],
