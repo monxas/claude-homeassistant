@@ -4,14 +4,14 @@ setlocal enabledelayedexpansion
 REM Home Assistant Configuration Management - Windows Setup Script
 REM This script sets up everything you need to get started
 
-echo 🏠 Home Assistant Configuration Management - Windows Setup
-echo ====================================================
+echo Home Assistant Configuration Management - Windows Setup
+echo =======================================================
 echo.
 
 REM Check if Python is available
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo ❌ Python is not installed or not in PATH.
+    echo [ERROR] Python is not installed or not in PATH.
     echo.
     echo Please install Python from https://www.python.org/downloads/
     echo Make sure to check "Add Python to PATH" during installation.
@@ -21,27 +21,39 @@ if errorlevel 1 (
 )
 
 REM Check Python version
-for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
-echo ✅ Python %PYTHON_VERSION% found
+for /f "tokens=2 delims= " %%i in ('python --version 2^>nul') do set PYTHON_VERSION=%%i
+if "%PYTHON_VERSION%"=="" (
+    set PYTHON_VERSION=Unknown
+)
+echo [OK] Python %PYTHON_VERSION% found
 
 REM Check if git is available
-git --version >nul 2>&1
+where git >nul 2>&1
 if errorlevel 1 (
-    echo ❌ Git is not installed or not in PATH.
-    echo.
-    echo Please install Git from https://git-scm.com/download/win
-    echo Git Bash includes make command which is needed for this project.
-    echo.
-    pause
-    exit /b 1
+    REM Try common Git installation paths
+    if exist "C:\Program Files\Git\cmd\git.exe" (
+        set PATH=%PATH%;C:\Program Files\Git\cmd
+        echo [OK] Git found in C:\Program Files\Git\cmd
+    ) else if exist "C:\Program Files (x86)\Git\cmd\git.exe" (
+        set PATH=%PATH%;C:\Program Files (x86)\Git\cmd
+        echo [OK] Git found in C:\Program Files (x86)\Git\cmd
+    ) else (
+        echo [ERROR] Git is not installed or not in PATH.
+        echo.
+        echo Please install Git from https://git-scm.com/download/win
+        echo Git Bash includes make command which is needed for this project.
+        echo.
+        pause
+        exit /b 1
+    )
+) else (
+    echo [OK] Git found
 )
-
-echo ✅ Git found
 
 REM Check if make is available (usually comes with Git Bash)
 make --version >nul 2>&1
 if errorlevel 1 (
-    echo ❌ Make is not available.
+    echo [ERROR] Make is not available.
     echo.
     echo Recommended solutions:
     echo 1. Use Git Bash (comes with Git for Windows) - RECOMMENDED
@@ -55,10 +67,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo ✅ Make found
+echo [OK] Make found
 
 echo.
-echo 🐍 Setting up Python environment...
+echo Setting up Python environment...
 
 REM Create virtual environment
 if not exist "venv" (
@@ -81,51 +93,46 @@ echo Installing Python dependencies...
 pip install homeassistant voluptuous pyyaml jsonschema requests
 
 echo.
-echo 🔧 Checking project setup...
+echo Checking project setup...
 
 REM Check if Makefile exists
 if not exist "Makefile" (
-    echo ❌ Makefile not found. Are you in the correct directory?
+    echo [ERROR] Makefile not found. Are you in the correct directory?
     pause
     exit /b 1
 )
 
-echo ✅ Makefile found
+echo [OK] Makefile found
 
 REM Check if Claude Code is available
 claude --version >nul 2>&1
 if errorlevel 1 (
-    echo ⚠️  Claude Code not found - installing...
-    echo Downloading Claude Code installer...
-
-    REM Download Claude Code for Windows
-    powershell -Command "Invoke-WebRequest -Uri 'https://claude.ai/download/windows' -OutFile '%TEMP%\claude-code-setup.exe'"
-
-    if exist "%TEMP%\claude-code-setup.exe" (
-        echo Opening Claude Code installer...
-        start "%TEMP%\claude-code-setup.exe"
-        echo.
-        echo 📱 Please complete the Claude Code installation:
-        echo 1. Follow the installation wizard
-        echo 2. Complete the setup process
-        echo 3. Re-run this script after installation: setup-windows.bat
-        echo.
-        echo Claude Code will help you manage your Home Assistant configuration easily!
-        pause
-        exit /b 0
-    ) else (
-        echo ❌ Failed to download Claude Code installer
-        echo Please download manually from: https://claude.ai/download
-        echo Then re-run this script
-        pause
-        exit /b 1
-    )
+    echo [WARNING] Claude Code not found
+    echo.
+    echo Claude Code is required for this tool to work effectively.
+    echo.
+    echo To install Claude Code:
+    echo 1. Visit: https://claude.ai/
+    echo 2. Sign up for Claude Pro if you haven't already
+    echo 3. Download the Claude desktop app for Windows
+    echo 4. Install the downloaded file (usually named Claude-Setup-x64.exe)
+    echo 5. Launch Claude and complete the setup
+    echo.
+    echo After installation:
+    echo - Claude Code CLI should be available in your terminal
+    echo - Re-run this script to continue: setup-windows.bat
+    echo.
+    echo Note: Claude Code provides AI-powered assistance for managing
+    echo your Home Assistant configuration files safely and efficiently.
+    echo.
+    pause
+    exit /b 0
 ) else (
-    echo ✅ Claude Code found
+    echo [OK] Claude Code found
 )
 
 echo.
-echo ⚙️  Home Assistant Configuration
+echo Home Assistant Configuration
 echo ===============================
 echo.
 echo Let's configure your Home Assistant connection!
@@ -135,7 +142,7 @@ REM Get Home Assistant host
 :get_host
 set /p HA_HOST="Enter your Home Assistant hostname or IP address (e.g., homeassistant.local or 192.168.1.100): "
 if "%HA_HOST%"=="" (
-    echo ❌ Hostname/IP cannot be empty
+    echo [ERROR] Hostname/IP cannot be empty
     goto get_host
 )
 
@@ -143,7 +150,7 @@ echo.
 echo Testing connection to %HA_HOST%...
 ping -n 1 %HA_HOST% >nul 2>&1
 if errorlevel 1 (
-    echo ⚠️  Warning: Cannot reach %HA_HOST% - please verify the address
+    echo [WARNING] Cannot reach %HA_HOST% - please verify the address
     set /p continue_setup="Continue anyway? (y/N): "
     if /i not "!continue_setup!"=="y" (
         echo Setup cancelled. Please check your Home Assistant address and try again.
@@ -151,11 +158,11 @@ if errorlevel 1 (
         exit /b 1
     )
 ) else (
-    echo ✅ Host %HA_HOST% is reachable
+    echo [OK] Host %HA_HOST% is reachable
 )
 
 echo.
-echo 🔑 SSH Configuration
+echo SSH Configuration
 echo ===================
 echo.
 echo For secure access, this tool uses SSH keys. Do you have SSH access configured?
@@ -173,7 +180,7 @@ if "%ssh_option%"=="1" (
     REM Test SSH connection (Windows doesn't have a direct equivalent to BatchMode, so we use timeout)
     ssh -o ConnectTimeout=5 %HA_HOST% exit >nul 2>&1
     if errorlevel 1 (
-        echo ❌ SSH connection failed
+        echo [ERROR] SSH connection failed
         echo Please check your SSH configuration and try again
         echo Common issues:
         echo - SSH keys not added to Home Assistant
@@ -181,12 +188,12 @@ if "%ssh_option%"=="1" (
         echo - SSH addon not enabled in Home Assistant
         set SSH_CONFIGURED=false
     ) else (
-        echo ✅ SSH connection successful!
+        echo [OK] SSH connection successful!
         set SSH_CONFIGURED=true
     )
 ) else if "%ssh_option%"=="2" (
     echo.
-    echo 📚 SSH Setup Help
+    echo SSH Setup Help
     echo =================
     echo.
     echo To set up SSH access to Home Assistant:
@@ -210,7 +217,7 @@ if "%ssh_option%"=="1" (
     set SSH_CONFIGURED=false
 ) else if "%ssh_option%"=="3" (
     echo.
-    echo ⏭️  Skipping SSH setup - you can configure this later
+    echo [INFO] Skipping SSH setup - you can configure this later
     set SSH_CONFIGURED=false
 ) else (
     echo Invalid option. Skipping SSH setup.
@@ -219,28 +226,28 @@ if "%ssh_option%"=="1" (
 
 REM Update Makefile with the provided host
 echo.
-echo 📝 Updating Makefile configuration...
+echo Updating Makefile configuration...
 if exist "Makefile" (
     REM Create backup
     copy Makefile Makefile.backup >nul
 
     REM Update HA_HOST in Makefile (Windows batch doesn't have sed, so we use PowerShell)
     powershell -Command "(Get-Content Makefile) -replace '^HA_HOST = .*', 'HA_HOST = %HA_HOST%' | Set-Content Makefile"
-    echo ✅ Makefile updated with HA_HOST = %HA_HOST%
+    echo [OK] Makefile updated with HA_HOST = %HA_HOST%
 ) else (
-    echo ❌ Makefile not found - you may need to configure manually
+    echo [ERROR] Makefile not found - you may need to configure manually
 )
 
 echo.
-echo 🎉 Setup Complete!
+echo Setup Complete!
 echo ==================
 echo.
 echo Configuration Summary:
 echo - Home Assistant Host: %HA_HOST%
 if "%SSH_CONFIGURED%"=="true" (
-    echo - SSH Access: ✅ Configured and tested
+    echo - SSH Access: [OK] Configured and tested
 ) else (
-    echo - SSH Access: ⚠️  Needs configuration
+    echo - SSH Access: [WARNING] Needs configuration
 )
 echo.
 echo Next steps:
