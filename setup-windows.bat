@@ -97,10 +97,10 @@ claude --version >nul 2>&1
 if errorlevel 1 (
     echo ⚠️  Claude Code not found - installing...
     echo Downloading Claude Code installer...
-    
+
     REM Download Claude Code for Windows
     powershell -Command "Invoke-WebRequest -Uri 'https://claude.ai/download/windows' -OutFile '%TEMP%\claude-code-setup.exe'"
-    
+
     if exist "%TEMP%\claude-code-setup.exe" (
         echo Opening Claude Code installer...
         start "%TEMP%\claude-code-setup.exe"
@@ -125,18 +125,135 @@ if errorlevel 1 (
 )
 
 echo.
+echo ⚙️  Home Assistant Configuration
+echo ===============================
+echo.
+echo Let's configure your Home Assistant connection!
+echo.
+
+REM Get Home Assistant host
+:get_host
+set /p HA_HOST="Enter your Home Assistant hostname or IP address (e.g., homeassistant.local or 192.168.1.100): "
+if "%HA_HOST%"=="" (
+    echo ❌ Hostname/IP cannot be empty
+    goto get_host
+)
+
+echo.
+echo Testing connection to %HA_HOST%...
+ping -n 1 %HA_HOST% >nul 2>&1
+if errorlevel 1 (
+    echo ⚠️  Warning: Cannot reach %HA_HOST% - please verify the address
+    set /p continue_setup="Continue anyway? (y/N): "
+    if /i not "!continue_setup!"=="y" (
+        echo Setup cancelled. Please check your Home Assistant address and try again.
+        pause
+        exit /b 1
+    )
+) else (
+    echo ✅ Host %HA_HOST% is reachable
+)
+
+echo.
+echo 🔑 SSH Configuration
+echo ===================
+echo.
+echo For secure access, this tool uses SSH keys. Do you have SSH access configured?
+echo.
+echo Options:
+echo 1. I already have SSH key access configured
+echo 2. I need help setting up SSH keys
+echo 3. Skip SSH setup for now (manual configuration later)
+echo.
+set /p ssh_option="Choose option (1-3): "
+
+if "%ssh_option%"=="1" (
+    echo.
+    echo Testing SSH connection to %HA_HOST%...
+    REM Test SSH connection (Windows doesn't have a direct equivalent to BatchMode, so we use timeout)
+    ssh -o ConnectTimeout=5 %HA_HOST% exit >nul 2>&1
+    if errorlevel 1 (
+        echo ❌ SSH connection failed
+        echo Please check your SSH configuration and try again
+        echo Common issues:
+        echo - SSH keys not added to Home Assistant
+        echo - Incorrect hostname/IP
+        echo - SSH addon not enabled in Home Assistant
+        set SSH_CONFIGURED=false
+    ) else (
+        echo ✅ SSH connection successful!
+        set SSH_CONFIGURED=true
+    )
+) else if "%ssh_option%"=="2" (
+    echo.
+    echo 📚 SSH Setup Help
+    echo =================
+    echo.
+    echo To set up SSH access to Home Assistant:
+    echo.
+    echo 1. Install the 'SSH ^& Web Terminal' add-on in Home Assistant
+    echo 2. Generate an SSH key pair if you don't have one:
+    echo    ssh-keygen -t ed25519 -C "your-email@example.com"
+    echo.
+    echo 3. Copy your public key to Home Assistant manually:
+    echo    - Open your public key file: type %USERPROFILE%\.ssh\id_ed25519.pub
+    echo    - Copy the content and add it to HA SSH addon authorized_keys
+    echo.
+    echo 4. Test the connection:
+    echo    ssh root@%HA_HOST%
+    echo.
+    echo For detailed instructions, visit:
+    echo https://github.com/home-assistant/addons/blob/master/ssh/DOCS.md
+    echo.
+    echo Note: On Windows, consider using Git Bash or WSL for easier SSH management.
+    echo.
+    set SSH_CONFIGURED=false
+) else if "%ssh_option%"=="3" (
+    echo.
+    echo ⏭️  Skipping SSH setup - you can configure this later
+    set SSH_CONFIGURED=false
+) else (
+    echo Invalid option. Skipping SSH setup.
+    set SSH_CONFIGURED=false
+)
+
+REM Update Makefile with the provided host
+echo.
+echo 📝 Updating Makefile configuration...
+if exist "Makefile" (
+    REM Create backup
+    copy Makefile Makefile.backup >nul
+
+    REM Update HA_HOST in Makefile (Windows batch doesn't have sed, so we use PowerShell)
+    powershell -Command "(Get-Content Makefile) -replace '^HA_HOST = .*', 'HA_HOST = %HA_HOST%' | Set-Content Makefile"
+    echo ✅ Makefile updated with HA_HOST = %HA_HOST%
+) else (
+    echo ❌ Makefile not found - you may need to configure manually
+)
+
+echo.
 echo 🎉 Setup Complete!
 echo ==================
 echo.
+echo Configuration Summary:
+echo - Home Assistant Host: %HA_HOST%
+if "%SSH_CONFIGURED%"=="true" (
+    echo - SSH Access: ✅ Configured and tested
+) else (
+    echo - SSH Access: ⚠️  Needs configuration
+)
+echo.
 echo Next steps:
-echo 1. Configure your Home Assistant connection in the Makefile:
-echo    - Edit the HA_HOST variable with your Home Assistant hostname/IP
-echo    - Set up SSH key authentication to your HA instance
-echo.
-echo 2. Pull your actual configuration:
-echo    make pull
-echo.
-echo 3. Start creating automations with Claude Code!
+if "%SSH_CONFIGURED%"=="true" (
+    echo 1. Pull your actual configuration:
+    echo    make pull
+    echo.
+    echo 2. Start creating automations with Claude Code!
+) else (
+    echo 1. Complete SSH setup ^(see instructions above^)
+    echo 2. Pull your actual configuration: make pull
+    echo 3. Start creating automations with Claude Code!
+)
 echo.
 echo IMPORTANT: Use Git Bash or WSL to run make commands if you encounter issues
 echo with the regular Windows Command Prompt.

@@ -23,16 +23,16 @@ Click to play
 Download the project and run the setup script for your operating system:
 
 #### **For Mac Users:**
-1. Download or clone this repository ([quick tutorial](https://youtu.be/SWYqp7iY_Tc))
-2. Open Terminal and navigate to the project folder ([how to use Terminal on Mac](https://youtu.be/aKRYQsKR46I))
+1. Download or clone this repository ([quick tutorial](https://youtu.be/q9wc7hUrW8U?si=_eT7nL8R8xXec7hL))
+2. Open Terminal and navigate to the project folder ([how to use Terminal on Mac](https://youtu.be/aj9QWELAv9o?si=jx5HexpF60q3ZxO4))
 3. Run the setup script:
 ```bash
 ./setup-mac.sh
 ```
 
 #### **For Windows Users:**
-1. Download or clone this repository ([quick tutorial](https://youtu.be/SWYqp7iY_Tc))
-2. Open Command Prompt and navigate to the project folder ([how to use Command Prompt](https://youtu.be/MBBWVgE0ewk))
+1. Download or clone this repository ([quick tutorial](https://youtu.be/q9wc7hUrW8U?si=_eT7nL8R8xXec7hL)
+2. Open Command Prompt and navigate to the project folder ([how to use terminal on Win](https://youtu.be/8gUvxU7EoNE?si=BCgFIU8ng_ebhWaR))
 3. Run the setup script:
 ```cmd
 setup-windows.bat

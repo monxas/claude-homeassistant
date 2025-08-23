@@ -112,10 +112,10 @@ if command_exists claude; then
 else
     echo "⚠️  Claude Code not found - installing..."
     echo "Downloading Claude Code installer..."
-    
+
     # Download Claude Code for Mac
     curl -L -o /tmp/claude-code.dmg "https://claude.ai/download/macos"
-    
+
     if [ $? -eq 0 ]; then
         echo "Opening Claude Code installer..."
         open /tmp/claude-code.dmg
@@ -136,18 +136,133 @@ else
 fi
 
 echo ""
+echo "⚙️  Home Assistant Configuration"
+echo "==============================="
+echo ""
+echo "Let's configure your Home Assistant connection!"
+echo ""
+
+# Get Home Assistant host
+read -p "Enter your Home Assistant hostname or IP address (e.g., homeassistant.local or 192.168.1.100): " HA_HOST
+while [ -z "$HA_HOST" ]; do
+    echo "❌ Hostname/IP cannot be empty"
+    read -p "Enter your Home Assistant hostname or IP address: " HA_HOST
+done
+
+echo ""
+echo "Testing connection to $HA_HOST..."
+if ping -c 1 "$HA_HOST" >/dev/null 2>&1; then
+    echo "✅ Host $HA_HOST is reachable"
+else
+    echo "⚠️  Warning: Cannot reach $HA_HOST - please verify the address"
+    read -p "Continue anyway? (y/N): " continue_setup
+    if [[ ! "$continue_setup" =~ ^[Yy]$ ]]; then
+        echo "Setup cancelled. Please check your Home Assistant address and try again."
+        exit 1
+    fi
+fi
+
+echo ""
+echo "🔑 SSH Configuration"
+echo "==================="
+echo ""
+echo "For secure access, this tool uses SSH keys. Do you have SSH access configured?"
+echo ""
+echo "Options:"
+echo "1. I already have SSH key access configured"
+echo "2. I need help setting up SSH keys"
+echo "3. Skip SSH setup for now (manual configuration later)"
+echo ""
+read -p "Choose option (1-3): " ssh_option
+
+case $ssh_option in
+    1)
+        # Test SSH connection
+        echo ""
+        echo "Testing SSH connection to $HA_HOST..."
+        if ssh -o ConnectTimeout=5 -o BatchMode=yes "$HA_HOST" exit >/dev/null 2>&1; then
+            echo "✅ SSH connection successful!"
+            SSH_CONFIGURED=true
+        else
+            echo "❌ SSH connection failed"
+            echo "Please check your SSH configuration and try again"
+            echo "Common issues:"
+            echo "- SSH keys not added to Home Assistant"
+            echo "- Incorrect hostname/IP"
+            echo "- SSH addon not enabled in Home Assistant"
+            SSH_CONFIGURED=false
+        fi
+        ;;
+    2)
+        echo ""
+        echo "📚 SSH Setup Help"
+        echo "================="
+        echo ""
+        echo "To set up SSH access to Home Assistant:"
+        echo ""
+        echo "1. Install the 'SSH & Web Terminal' add-on in Home Assistant"
+        echo "2. Generate an SSH key pair if you don't have one:"
+        echo "   ssh-keygen -t ed25519 -C \"your-email@example.com\""
+        echo ""
+        echo "3. Copy your public key to Home Assistant:"
+        echo "   ssh-copy-id -i ~/.ssh/id_ed25519.pub root@$HA_HOST"
+        echo ""
+        echo "4. Test the connection:"
+        echo "   ssh root@$HA_HOST"
+        echo ""
+        echo "For detailed instructions, visit:"
+        echo "https://github.com/home-assistant/addons/blob/master/ssh/DOCS.md"
+        echo ""
+        SSH_CONFIGURED=false
+        ;;
+    3)
+        echo ""
+        echo "⏭️  Skipping SSH setup - you can configure this later"
+        SSH_CONFIGURED=false
+        ;;
+    *)
+        echo "Invalid option. Skipping SSH setup."
+        SSH_CONFIGURED=false
+        ;;
+esac
+
+# Update Makefile with the provided host
+echo ""
+echo "📝 Updating Makefile configuration..."
+if [ -f "Makefile" ]; then
+    # Create backup
+    cp Makefile Makefile.backup
+
+    # Update HA_HOST in Makefile
+    sed -i.bak "s/^HA_HOST = .*/HA_HOST = $HA_HOST/" Makefile && rm Makefile.bak
+    echo "✅ Makefile updated with HA_HOST = $HA_HOST"
+else
+    echo "❌ Makefile not found - you may need to configure manually"
+fi
+
+echo ""
 echo "🎉 Setup Complete!"
 echo "=================="
 echo ""
+echo "Configuration Summary:"
+echo "- Home Assistant Host: $HA_HOST"
+if [ "$SSH_CONFIGURED" = true ]; then
+    echo "- SSH Access: ✅ Configured and tested"
+else
+    echo "- SSH Access: ⚠️  Needs configuration"
+fi
+echo ""
 echo "Next steps:"
-echo "1. Configure your Home Assistant connection in the Makefile:"
-echo "   - Edit the HA_HOST variable with your Home Assistant hostname/IP"
-echo "   - Set up SSH key authentication to your HA instance"
-echo ""
-echo "2. Pull your actual configuration:"
-echo "   make pull"
-echo ""
-echo "3. Start creating automations with Claude Code!"
+if [ "$SSH_CONFIGURED" = true ]; then
+    echo "1. Pull your actual configuration:"
+    echo "   make pull"
+    echo ""
+    echo "2. Start creating automations with Claude Code!"
+else
+    echo "1. Complete SSH setup (see instructions above)"
+    echo "2. Pull your actual configuration: make pull"
+    echo "3. Start creating automations with Claude Code!"
+fi
 echo ""
 echo "For detailed instructions, see the README.md file."
 echo ""

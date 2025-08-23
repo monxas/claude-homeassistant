@@ -322,9 +322,13 @@ class HAConfigValidator:
                     # Blueprint automations use 'use_blueprint' instead of direct triggers/actions
                     if "use_blueprint" not in automation:
                         if "trigger" not in automation and "triggers" not in automation:
-                            self.errors.append(f"Automation {i} missing required 'trigger' or 'triggers'")
+                            self.errors.append(
+                                f"Automation {i} missing required 'trigger' or 'triggers'"
+                            )
                         if "action" not in automation and "actions" not in automation:
-                            self.errors.append(f"Automation {i} missing required 'action' or 'actions'")
+                            self.errors.append(
+                                f"Automation {i} missing required 'action' or 'actions'"
+                            )
 
         except yaml.YAMLError as e:
             self.errors.append(f"YAML syntax error in automations.yaml: {e}")
@@ -353,9 +357,13 @@ class HAConfigValidator:
 
                     # Check required fields
                     # Blueprint scripts use 'use_blueprint' instead of direct sequence
-                    if "use_blueprint" not in script_config and "sequence" not in script_config:
+                    if (
+                        "use_blueprint" not in script_config
+                        and "sequence" not in script_config
+                    ):
                         self.errors.append(
-                            f"Script '{script_name}' missing required " f"'sequence' or 'use_blueprint'"
+                            f"Script '{script_name}' missing required "
+                            f"'sequence' or 'use_blueprint'"
                         )
 
         except yaml.YAMLError as e:

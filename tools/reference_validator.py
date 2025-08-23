@@ -167,16 +167,17 @@ class ReferenceValidator:
     def is_template(self, value: str) -> bool:
         """Check if value is a Jinja2 template expression."""
         import re
+
         # Match template expressions like {{ ... }}
-        return bool(re.search(r'\{\{.*?\}\}', value))
+        return bool(re.search(r"\{\{.*?\}\}", value))
 
     def should_skip_entity_validation(self, value: str) -> bool:
         """Check if entity reference should be skipped during validation."""
         return (
-            value.startswith("!") or  # HA tags like !input, !secret
-            self.is_uuid_format(value) or  # UUID format (device-based)
-            self.is_template(value) or  # Template expressions
-            value in self.SPECIAL_KEYWORDS  # Special keywords like "all", "none"
+            value.startswith("!")  # HA tags like !input, !secret
+            or self.is_uuid_format(value)  # UUID format (device-based)
+            or self.is_template(value)  # Template expressions
+            or value in self.SPECIAL_KEYWORDS  # Special keywords like "all", "none"
         )
 
     def extract_entity_references(self, data: Any, path: str = "") -> Set[str]:
@@ -194,7 +195,9 @@ class ReferenceValidator:
                             entities.add(value)
                     elif isinstance(value, list):
                         for entity in value:
-                            if isinstance(entity, str) and not self.should_skip_entity_validation(entity):
+                            if isinstance(
+                                entity, str
+                            ) and not self.should_skip_entity_validation(entity):
                                 entities.add(entity)
 
                 # Device-related keys
