@@ -1,0 +1,21 @@
+- filter:
+    include_entities:
+      - input_boolean.app_updater
+
+      - fan.ventilador_habitacion
+      - fan.ventilador_despacho
+
+      - light.bano_luz
+      - light.despensa_luz
+      - light.shelly_habitacion_mqtt
+      - light.armario_bombilla
+
+      - climate.dormitorio_radiador
+      - climate.ordenador_radiador
+
+      - sensor.despacho_air_quality_co2
+      - sensor.despacho_air_quality_formaldehyd
+      - sensor.despacho_air_quality_humidity
+      - sensor.despacho_air_quality_pm25
+      - sensor.despacho_air_quality_temperature
+      - sensor.despacho_air_quality_voc

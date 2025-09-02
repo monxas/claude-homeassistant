@@ -1,52 +1,284 @@
-# Example Home Assistant Scripts
-# These are reusable sequences that can be called from automations or manually
-
-good_morning:
-  alias: "Good Morning Routine"
-  description: "Morning startup sequence"
+fan_off:
+  alias: fan_off
   sequence:
-    - service: light.turn_on
-      target:
-        area_id: bedroom
-      data:
-        brightness_pct: 30
-    - delay: '00:00:30'
-    - service: media_player.volume_set
-      target:
-        entity_id: media_player.bedroom_speaker
-      data:
-        volume_level: 0.3
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.bedroom_speaker
-      data:
-        media_content_id: "https://example.com/morning_playlist"
-        media_content_type: "music"
-
-good_night:
-  alias: "Good Night Routine"
-  description: "Evening shutdown sequence"
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.despacho_plug_ventilador_outlet
+  mode: single
+  icon: mdi:fan-remove
+fan_on:
+  alias: fan_on
   sequence:
-    - service: light.turn_off
-      target:
-        area_id: living_room
-    - service: climate.set_temperature
-      target:
-        entity_id: climate.main_thermostat
-      data:
-        temperature: 68
-    - service: lock.lock
-      target:
-        area_id: exterior
-
-security_check:
-  alias: "Security Check"
-  description: "Check all doors and windows"
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.despacho_plug_ventilador_outlet
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: remote.send_command
+    target:
+      entity_id: remote.wi_fi_universal_remote
+    data:
+      device: ventilador
+      command: power
+      hold_secs: 1
+  mode: single
+  icon: mdi:fan-plus
+fan_habitacion_toggle:
+  alias: fan_habitacion_toggle
   sequence:
-    - service: notify.mobile_app
+  - service: remote.send_command
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: habitacion_ventilador
+      command: fan_toggle
+    target:
+      device_id: e59a704ad0a8e8b287471a66b550889f
+  - service: input_boolean.toggle
+    data: {}
+    target:
+      entity_id: input_boolean.fan_habitacion_state
+  mode: single
+  icon: mdi:ceiling-fan
+fan_habitacion_light_toggle:
+  alias: fan_habitacion_light_toggle
+  sequence:
+  - data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: habitacion_ventilador
+      command: fan_light_toggle
+    target:
+      device_id: e59a704ad0a8e8b287471a66b550889f
+    action: remote.send_command
+  mode: single
+  icon: mdi:ceiling-fan-light
+comprobar_cocina:
+  alias: comprobar cocina
+  sequence:
+  - if:
+    - condition: state
+      entity_id: input_boolean.cocina_ocupada
+      state: 'off'
+    then:
+    - action: tts.speak
+      metadata: {}
       data:
-        title: "Security Check"
-        message: >
-          Front Door: {{ states('lock.front_door') }}
-          Back Door: {{ states('lock.back_door') }}
-          Security System: {{ states('alarm_control_panel.home_security') }}
+        cache: true
+        media_player_entity_id: media_player.dormitorio_sonos
+        message: la cocina está libre
+      target:
+        entity_id: tts.piper
+    else:
+    - variables:
+        time_on: '{{ ((as_timestamp(now()) - as_timestamp(states.input_boolean.cocina_ocupada.last_changed))
+          // 60) }}'
+    - action: tts.speak
+      metadata: {}
+      data:
+        cache: true
+        media_player_entity_id: media_player.dormitorio_sonos
+        message: 'Monitoreando cocina. '
+      target:
+        entity_id: tts.piper
+    - metadata: {}
+      data: {}
+      target:
+        entity_id: input_boolean.cocina_ocupada_alerta
+      action: input_boolean.turn_on
+  mode: single
+on_llamada_portal_comelit_script:
+  alias: on_llamada_portal_comelit_script
+  sequence:
+  - parallel:
+    - action: tts.speak
+      target:
+        entity_id: tts.piper
+      data:
+        cache: true
+        media_player_entity_id: media_player.default_room
+        message: Alguien llama al portal
+    - action: tts.speak
+      target:
+        entity_id: tts.piper
+      data:
+        cache: true
+        media_player_entity_id: media_player.dormitorio_sonos
+        message: Alguien llama al portal
+    - action: tts.speak
+      target:
+        entity_id: tts.piper
+      data:
+        cache: true
+        media_player_entity_id: media_player.despacho
+        message: Alguien llama al portal
+    - data:
+        message: 'Atención: Alguien llama al portal'
+        data:
+          actions:
+          - action: OPEN_DOOR
+            title: Abrir puerta
+      action: notify.mobile_app_iphone_16_pro
+    - data:
+        message: 'Atención: Alguien llama al portal'
+      action: notify.alexa_media_echo_dot_del_ordenador
+    - data:
+        message: 'Atención: Alguien llama al portal'
+      action: notify.alexa_media_echo_dot_de_ramon
+    - data:
+        message: 'Atención: Alguien llama al portal'
+      action: notify.alexa_media_fire_tv_cube_de_ramon
+  - wait_for_trigger:
+    - event_type: mobile_app_notification_action
+      event_data:
+        action: OPEN_DOOR
+      trigger: event
+    continue_on_timeout: false
+    timeout:
+      hours: 0
+      minutes: 0
+      seconds: 20
+      milliseconds: 0
+  - metadata: {}
+    data: {}
+    target:
+      entity_id: button.comelit_open_main_door
+    action: button.press
+  - action: notify.mobile_app_iphone_16_pro
+    data:
+      message: Puerta abierta
+  mode: single
+abrir_portal:
+  alias: Abrir portal
+  sequence:
+  - service: button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - button.comelit_open_main_door
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id: button.comelit_turn_on_video
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 3
+      milliseconds: 0
+  - service: button.press
+    metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - button.comelit_open_main_door
+  mode: single
+new_script:
+  alias: New Script
+  sequence:
+  - service: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.armario_bombilla
+  fields:
+    set_armario_bombilla_color:
+      selector:
+        color_rgb: {}
+      name: set armario bombilla color
+      description: choose the color for the light bulb
+  description: Set armario bombilla color
+change_personality:
+  alias: Change personality
+  sequence:
+  - service: input_text.set_value
+    metadata: {}
+    data:
+      value: '{{description}}'
+    target:
+      entity_id: input_text.agent_personality
+  fields:
+    description:
+      selector:
+        text:
+      name: description
+      description: Description of the personality of the agent
+  description: 'Change the agent''s personality by providing a precise and through
+    description of it''s key components. Example: a drunk pirate, or Jarvis from Ironman.
+    Everything is possible'
+reset_personality:
+  alias: reset personality
+  sequence:
+  - service: input_text.set_value
+    metadata: {}
+    data:
+      value: Your name is Assist.
+    target:
+      entity_id: input_text.agent_personality
+  fields: {}
+  description: 'Resets the agent''s personality '
+get_calendar_events:
+  alias: get calendar events
+  sequence:
+  - service: calendar.get_events
+    metadata: {}
+    data:
+      start_date_time: '{{ date }}'
+      duration:
+        hours: 22
+        minutes: 0
+        seconds: 0
+    target:
+      entity_id: calendar.cartrawler
+    response_variable: agenda
+  - alias: Conversation Agent Notification Text
+    service: conversation.process
+    data:
+      text: "Time: {{ now() }}\nCalendar \"{{ state_attr('calendar.cartrawler', 'friendly_name')
+        }}\" events for the next 22 hours:\n{%- if agenda.events %}\n  {%- for event
+        in agenda.events %}\n  - Summary: {{ event.summary }}\n    Start-End: {% if
+        event.start is defined %}{{ event.start }} to {{ event.end }}{% else %}All
+        Day{% endif %}\n    {%- if event.description is defined %}\n    Description:
+        {{ event.description }}\n    {% endif -%}\n    {%- if event.location is defined
+        %}\n      Location: {{ event.location }}\n    {% endif -%}\n  {%- endfor %}\n{%-
+        else %}\n  - No upcoming events.\n{%- endif %}\n\n{{ prompt }}"
+    response_variable: agenda
+  fields:
+    date:
+      selector:
+        datetime: {}
+      name: Date
+      description: Date of the events you want to receive
+      required: true
+  description: tool to get the calendar events of a particular day. use date and time
+    format with time as 12am to get the full day
+ventilador_habitacion_auto:
+  alias: ventilador habitacion auto
+  use_blueprint:
+    path: homeassistant/ask_yes_no_question.yaml
+    input:
+      question: quieres que encienda el ventilador?
+      yes_actions:
+      - action: fan.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: fan.ventilador_habitacion
+      yes_answer: vale
+      other_answer: vale
+      no_answer: vale
+  description: This script prompts the user with a Yes/No question regarding turning
+    on the room fan, and acts accordingly based on the response.

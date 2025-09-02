@@ -7,7 +7,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 # Configuration
-HA_HOST = your_homeassistant_host
+HA_HOST ?= your_homeassistant_host
 HA_REMOTE_PATH = /config/
 LOCAL_CONFIG_PATH = config/
 BACKUP_DIR = backups

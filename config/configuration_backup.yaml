@@ -1,0 +1,187 @@
+# Default Configurations
+default_config:
+
+# HTTP Settings
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.30.33.0/24
+    - 192.168.0.0/24
+
+# Frontend Themes
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Text to Speech
+tts:
+  - platform: google_translate
+
+# Includes
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+fan: !include fans.yaml
+
+# Database Recorder
+recorder:
+  db_url: mysql://homeassistant:RyHvvet3uZyy568g7JgL@core-mariadb/homeassistant?charset=utf8mb4
+
+# Wake on LAN
+wake_on_lan:
+
+mqtt:
+  - sensor:
+      name: "shelly1l_input_0"
+      state_topic: "shellies/shelly1l-98CDAC2FC4B9/input/0"
+  - sensor:
+      name: "shelly1l_input_1"
+      state_topic: "shellies/shelly1l-98CDAC2FC4B9/input/1"
+  - sensor:
+      name: "shelly1l_armario_input_0"
+      state_topic: "shellies/shelly1l-98CDAC2F71D0/input/0"
+  - sensor:
+      name: "shelly1l_armario_input_1"
+      state_topic: "shellies/shelly1l-98CDAC2F71D0/input/1"
+
+light:
+  - platform: template
+    lights:
+      shelly_habitacion_mqtt:
+        friendly_name: "luz ventilador habitacion"
+        turn_on:
+          service: input_boolean.toggle
+          entity_id: input_boolean.luz_habitacion
+        turn_off:
+          service: input_boolean.toggle
+          entity_id: input_boolean.luz_habitacion
+        value_template: '{{ is_state(input_boolean.luz_habitacion, ''on'') }}'
+        
+        # influxdb
+influxdb:
+  api_version: 2
+  ssl: false
+  host: 192.168.0.211
+  port: 8086
+  token: nnM1m1ssZdOHGkO0Iw8ZvcIPGGUOrp0P48CTFcywWmyRKlSxkHbXRtVmCbFvFbJuO2EDULoh0MEVfnJ4K8B-8Q==
+  organization: 5f94ce05ec5edbec
+  bucket: home_assistant
+  tags:
+    source: HA
+  tags_attributes:
+    - friendly_name
+
+input_text:
+  agent_personality:
+    name: agent personality
+    min: 0
+    max: 255
+
+sensor:
+  - platform: template
+    sensors:
+      soccer_event_name:
+        friendly_name: "Event Name"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'event_name') }}"
+
+      soccer_date:
+        friendly_name: "Event Date"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'date') }}"
+
+      soccer_venue:
+        friendly_name: "Venue"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'venue') }}"
+
+      soccer_location:
+        friendly_name: "Location"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'location') }}"
+
+      soccer_tv_network:
+        friendly_name: "TV Network"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'tv_network') }}"
+
+      soccer_team_name:
+        friendly_name: "Team Name"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'team_name') }}"
+
+      soccer_team_logo:
+        friendly_name: "Team Logo"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'team_logo') }}"
+        entity_picture_template: "{{ state_attr('sensor.team_tracker_spain', 'team_logo') }}"
+
+      soccer_team_score:
+        friendly_name: "Team Score"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'team_score') }}"
+
+      soccer_team_win_probability:
+        friendly_name: "Team Win Probability"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'team_win_probability') }}"
+
+      soccer_opponent_name:
+        friendly_name: "Opponent Name"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_name') }}"
+
+      soccer_opponent_logo:
+        friendly_name: "Opponent Logo"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_logo') }}"
+        entity_picture_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_logo') }}"
+
+      soccer_opponent_score:
+        friendly_name: "Opponent Score"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_score') }}"
+
+      soccer_opponent_win_probability:
+        friendly_name: "Opponent Win Probability"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_win_probability') }}"
+
+      soccer_quarter:
+        friendly_name: "Quarter"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'quarter') }}"
+
+      soccer_clock:
+        friendly_name: "Clock"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'clock') }}"
+
+      soccer_last_play:
+        friendly_name: "Last Play"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'last_play') }}"
+
+      soccer_team_shots_on_target:
+        friendly_name: "Team Shots on Target"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'team_shots_on_target') }}"
+
+      soccer_team_total_shots:
+        friendly_name: "Team Total Shots"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'team_total_shots') }}"
+
+      soccer_opponent_shots_on_target:
+        friendly_name: "Opponent Shots on Target"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_shots_on_target') }}"
+
+      soccer_opponent_total_shots:
+        friendly_name: "Opponent Total Shots"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'opponent_total_shots') }}"
+
+      soccer_last_update:
+        friendly_name: "Last Update"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'last_update') }}"
+
+      soccer_icon:
+        friendly_name: "Icon"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'icon') }}"
+
+      soccer_friendly_name:
+        friendly_name: "Friendly Name"
+        value_template: "{{ state_attr('sensor.team_tracker_spain', 'friendly_name') }}"
+
+  - platform: mqtt_room
+    device_id: "watch_ramon"
+    name: "watch_ramon"
+    state_topic: "espresense/devices/watch_ramon"
+    timeout: 10
+    away_timeout: 120
+  - platform: mqtt_room
+    device_id: "iphone_ramon"
+    name: "iphone_ramon"
+    state_topic: "espresense/devices/iphone_ramon"
+    timeout: 10
+    away_timeout: 120

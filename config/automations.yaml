@@ -1,51 +1,883 @@
-# Example Home Assistant Automations
-# These are example automations showcasing common patterns
-
-- id: 'example_motion_lights'
-  alias: 'Example: Motion Activated Lights'
-  description: 'Turn on lights when motion is detected'
+- id: '1685893161762'
+  alias: reset_sunrise_daily
+  description: ''
+  triggers:
+  - event: sunrise
+    offset: +00:30:00
+    trigger: sun
+  conditions: []
+  actions:
+  - target:
+      entity_id: input_select.modo
+    data:
+      option: En casa
+    action: input_select.select_option
+  - target:
+      entity_id: switch.adaptive_lighting_sleep_mode_adaptive_lightning
+    action: switch.turn_off
+    data: {}
+  mode: single
+- id: '1689287518933'
+  alias: Jarvis
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_agent_agenda.yaml
+    input:
+      conversation_agent: conversation.home_assistant
+      notify_time: 09:35:00
+      calendar_entity: calendar.cartrawler
+      notify_service: notify.alexa_media_echo_dot_de_ramon
+      calendar_duration:
+        hours: 14
+        minutes: 0
+        seconds: 0
+      weather_entity: weather.forecast_matematico
+      zone_entity: zone.home
+      prompt: "Por favor, genera un texto para una notificación que será enviada a
+        los usuarios a través de un altavoz con información útil.\n\nEres un asistente
+        personal servicial que genera textos para el usuario:\n\n- Tus respuestas
+        son útiles, amigas, cálidas e intuitivas. Adoptas una personalidad aleatoria
+        que puede ser risueña, gruñona, sarcástica o incluso aburrida.\n- Tus respuestas
+        no son técnicas y no incluyen detalles internos del Asistente del Hogar, como
+        entidades en las respuestas.\n- Tus mensajes ayudan al usuario a prepararse
+        para su día. Por ejemplo:\n  - Tomar nota del clima inusual para la ubicación
+        y época del año (pero sin incluir detalles mundanos como \"0% probabilidad
+        de precipitación\").\n  - Informar cuánto tiempo queda hasta su primera reunión.\n
+        \ - Señalar cualquier cosa que pueda ser especial o única, como la celebración
+        de un cumpleaños.\n\nNo menciones home assistant"
+- id: '1691096477625'
+  alias: TV LG turn on
+  description: ''
+  use_blueprint:
+    path: cvroque/webostv_turn_on.yaml
+    input:
+      webostv: media_player.salon_lg_webos_tv
+      webostv_mac: AC:5A:F0:8B:43:C2
+      select_action: false
+- id: '1691160232673'
+  alias: Fan automation based on conditions
+  description: Turns fan on when someone is detected (for at least 6 s), temperature
+    is above 20 °C and window is closed
+  triggers:
+  - entity_id: binary_sensor.despacho_presence_sensor_fp2_escritorio
+    to: 'on'
+    for:
+      seconds: 6
+    trigger: state
+  - entity_id: sensor.despacho_temperatura_humedad_temperature
+    above: 22
+    trigger: numeric_state
+  - entity_id: binary_sensor.despacho_ventana_contact
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: binary_sensor.despacho_presence_sensor_fp2_escritorio
+    state: 'on'
+  - condition: numeric_state
+    entity_id: sensor.despacho_temperatura_humedad_temperature
+    above: input_number.fan_temp_threshold
+  - condition: state
+    entity_id: binary_sensor.despacho_ventana_contact
+    state: 'off'
+  actions:
+  - target:
+      entity_id: fan.ventilador_despacho
+    data: {}
+    action: fan.turn_on
+- id: '1691160262319'
+  alias: Fan off automation based on conditions
+  description: Turns fan off when no one is detected, temperature is below or equal
+    to 20C or window is open
   trigger:
-    - platform: state
-      entity_id: binary_sensor.living_room_motion
-      to: 'on'
-  condition:
+  - platform: state
+    entity_id: binary_sensor.despacho_presence_sensor_fp2_escritorio
+    to: 'off'
+  - platform: numeric_state
+    entity_id: sensor.despacho_temperatura_humedad_temperature
+    below: input_number.fan_temp_threshold
+  - platform: state
+    entity_id: binary_sensor.despacho_ventana_contact
+    to: 'on'
+  action:
+  - service: fan.turn_off
+    target:
+      entity_id: fan.ventilador_despacho
+    data: {}
+- id: '1694112005079'
+  alias: dormitorio_luces_interruptor
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.shelly1l_input_0
+  - platform: state
+    entity_id: sensor.shelly1l_input_1
+  action:
+  - service: input_boolean.toggle
+    target:
+      entity_id: input_boolean.luz_habitacion
+    data: {}
+    enabled: true
+  - service: remote.send_command
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: habitacion_ventilador
+      command: fan_light_toggle
+    target:
+      device_id: e59a704ad0a8e8b287471a66b550889f
+    enabled: false
+  - service: script.fan_habitacion_light_toggle
+    metadata: {}
+    data: {}
+    enabled: false
+  mode: single
+- id: '1697123711575'
+  alias: reunido
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.reunido
+  condition: []
+  action:
+  - if:
     - condition: state
-      entity_id: sun.sun
-      state: 'below_horizon'
-  action:
+      entity_id: input_boolean.reunido
+      state: 'on'
+    then:
     - service: light.turn_on
-      target:
-        entity_id: light.living_room_main
       data:
-        brightness_pct: 75
-
-- id: 'example_schedule_lights'
-  alias: 'Example: Evening Light Schedule'
-  description: 'Turn on evening lights at sunset'
+        rgb_color:
+        - 255
+        - 0
+        - 0
+        brightness_pct: 2
+      target:
+        entity_id: light.armario_bombilla
+    else:
+    - service: light.turn_off
+      data: {}
+      target:
+        entity_id: light.armario_bombilla
+  mode: single
+- id: '1697126942584'
+  alias: armario_luces_interruptor
+  description: ''
   trigger:
-    - platform: sun
-      event: sunset
-      offset: "-00:30:00"
+  - platform: state
+    entity_id:
+    - event.shelly_armario_channel_1
+  - platform: state
+    entity_id:
+    - sensor.shelly1l_armario_input_1
+  condition: []
   action:
-    - service: light.turn_on
-      target:
-        area_id: living_room
-      data:
-        brightness_pct: 50
-
-- id: 'example_device_notification'
-  alias: 'Example: Low Battery Notification'
-  description: 'Notify when device battery is low'
+  - service: light.toggle
+    data:
+      color_temp: 500
+      brightness_pct: 70
+    target:
+      entity_id:
+      - light.armario_bombilla
+  mode: single
+- id: '1697217678218'
+  alias: Armario_luces_interruptor
+  description: ''
   trigger:
-    - platform: numeric_state
-      entity_id: sensor.phone_battery_level
-      below: 20
-  condition:
+  - platform: state
+    entity_id:
+    - sensor.shelly1l_armario_input_0
+  - platform: state
+    entity_id:
+    - sensor.shelly1l_armario_input_1
+  condition: []
+  action:
+  - service: light.toggle
+    data:
+      color_temp: 500
+      brightness_pct: 80
+    target:
+      entity_id: light.armario_bombilla
+  mode: single
+- id: '1697915432336'
+  alias: despensa_congelador_check
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.despensa_congelador_sensor
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 10
+  condition: []
+  action:
+  - service: notify.alexa_media_echo_de_la_cocina
+    data:
+      message: Puerta del congelador abierta
+  - repeat:
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 30
+          milliseconds: 0
+      - condition: state
+        entity_id: binary_sensor.despensa_congelador_sensor
+        state: 'on'
+      - service: notify.alexa_media_echo_de_la_cocina
+        data:
+          message: Puerta del congelador abierta
+      while:
+      - condition: state
+        entity_id: binary_sensor.despensa_congelador_sensor
+        state: 'on'
+  mode: single
+- id: '1699001421554'
+  alias: Turn Off Echo Alarm After Two Minutes
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{{ (states(''sensor.echo_dot_de_ramon_next_alarm'') | as_timestamp)
+      + 60 <= (now() | as_timestamp) }}'
+  action:
+  - service: media_player.play_media
+    data:
+      media_content_type: custom
+      media_content_id: para la alarma
+    target:
+      device_id: c4de97d905bf9cca18f4dc81931a8c26
+- id: '1700700173690'
+  alias: despacho_impresora_turn_off
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.octoprint_printing
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+  condition: []
+  action:
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.despacho_powerbar_zigbee_l4
+  mode: single
+- id: '1702333863236'
+  alias: ordenador_boton
+  description: ''
+  use_blueprint:
+    path: Drafted/aqara-buttons-all-in-one-zigbee2mqtt.yaml
+    input:
+      action_sensor: sensor.boton_ordenador_action
+      single_action:
+      - target:
+          entity_id: switch.pantallas
+        data: {}
+        action: switch.toggle
+      double_action:
+      - action: switch.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: switch.despacho_powerbar_zigbee_l4
+- id: '1706556931317'
+  alias: cocina ocupada automation
+  description: ''
+  triggers:
+  - entity_id:
+    - sensor.cocina_sensor_lux_illuminance
+    above: 12
+    id: entrando
+    trigger: numeric_state
+  - entity_id:
+    - sensor.cocina_sensor_lux_illuminance
+    id: saliendo
+    below: 10
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - entrando
+      sequence:
+      - metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.cocina_ocupada
+        action: input_boolean.turn_on
+    - conditions:
+      - condition: trigger
+        id:
+        - saliendo
+      sequence:
+      - target:
+          entity_id:
+          - input_boolean.cocina_ocupada
+        data: {}
+        action: input_boolean.turn_off
+  mode: single
+- id: '1706557866935'
+  alias: cocina alerta
+  description: ''
+  triggers:
+  - entity_id:
+    - input_boolean.cocina_ocupada
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.cocina_ocupada_alerta
+    state: 'on'
+  actions:
+  - metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.cocina_ocupada_alerta
+    action: input_boolean.turn_off
+  - action: media_player.volume_set
+    metadata: {}
+    data:
+      volume_level: 0.33
+    target:
+      entity_id: media_player.dormitorio_sonos
+  - action: tts.speak
+    metadata: {}
+    data:
+      cache: true
+      media_player_entity_id: media_player.dormitorio_sonos
+      message: la cocina ha quedado libre
+    target:
+      entity_id: tts.piper
+  mode: single
+- id: '1710694559425'
+  alias: comelit_on_llamada
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.comelit_video_entry_call
+    to: 'on'
+  condition: []
+  action:
+  - service: script.on_llamada_portal_comelit_script
+    metadata: {}
+    data: {}
+  mode: single
+- id: '1719835646317'
+  alias: jarvis_test
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_agent_agenda.yaml
+    input:
+      conversation_agent: conversation.home_assistant
+      notify_time: 09:35:00
+      calendar_entity: calendar.cartrawler
+      notify_service: notify.alexa_media_echo_dot_de_ramon
+      calendar_duration:
+        hours: 14
+        minutes: 0
+        seconds: 0
+      weather_entity: weather.forecast_matematico
+      zone_entity: zone.home
+      prompt: "Por favor, genera un texto para una notificación que será enviada a
+        los usuarios a través de un altavoz con información útil.\n\nEres un asistente
+        personal servicial que genera textos para el usuario:\n\n- Tus respuestas
+        son útiles, amigas, cálidas e intuitivas. Adoptas una personalidad aleatoria
+        que puede ser risueña, gruñona, sarcástica o incluso aburrida.\n- Tus respuestas
+        no son técnicas y no incluyen detalles internos del Asistente del Hogar, como
+        entidades en las respuestas.\n- Tus mensajes ayudan al usuario a prepararse
+        para su día. Por ejemplo:\n  - Tomar nota del clima inusual para la ubicación
+        y época del año (pero sin incluir detalles mundanos como \"0% probabilidad
+        de precipitación\").\n  - Informar cuánto tiempo queda hasta su primera reunión.\n
+        \ - Señalar cualquier cosa que pueda ser especial o única, como la celebración
+        de un cumpleaños.\n\nNo menciones home assistant"
+- id: '1721686178509'
+  alias: habitacion_luz
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.luz_habitacion
+  condition: []
+  action:
+  - service: script.fan_habitacion_light_toggle
+    metadata: {}
+    data: {}
+  mode: single
+- id: '1727122263480'
+  alias: pihole toggle
+  description: ''
+  triggers:
+  - event_type: call_service
+    event_data:
+      domain: switch
+      service_data:
+        entity_id: switch.pi_hole
+    trigger: event
+  actions:
+  - target:
+      entity_id: switch.pi_hole
+    action: switch.turn_off
+    data: {}
+  - repeat:
+      while:
+      - condition: template
+        value_template: '{{ is_state(''switch.pi_hole'', ''on'') }}'
+      - condition: template
+        value_template: '{{ repeat.index <= 10 }}'
+      sequence:
+      - target:
+          entity_id: switch.pi_hole
+        action: homeassistant.update_entity
+        data: {}
+      - delay: 00:00:05
+  - action: telegram_bot.send_message
+    metadata: {}
+    data:
+      message: Pi-hole desactivado por 3 minutos
+  - delay: 00:03:00
+  - target:
+      entity_id: switch.pi_hole
+    action: switch.turn_on
+    data: {}
+  - repeat:
+      while:
+      - condition: template
+        value_template: '{{ is_state(''switch.pi_hole'', ''off'') }}'
+      - condition: template
+        value_template: '{{ repeat.index <= 10 }}'
+      sequence:
+      - target:
+          entity_id: switch.pi_hole
+        action: homeassistant.update_entity
+        data: {}
+      - delay: 00:00:05
+  mode: single
+- id: '1727520720108'
+  alias: despensa_movimiento_control
+  description: Merged automation for light control based on movement sensor state
+    changes
+  triggers:
+  - entity_id: binary_sensor.despensa_movimiento_occupancy
+    to: 'on'
+    trigger: state
+  - entity_id: binary_sensor.despensa_movimiento_occupancy
+    from: 'on'
+    trigger: state
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.state == ''on'' }}'
+      sequence:
+      - target:
+          entity_id: light.despensa_luz
+        action: light.turn_on
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.from_state.state == ''on'' }}'
+      sequence:
+      - target:
+          entity_id: light.despensa_luz
+        action: light.turn_off
+  mode: single
+- id: '1727892005991'
+  alias: Dormitorio Auto Encender/Apagar Luz
+  description: Encender o apagar la luz según presencia y luminancia
+  triggers:
+  - entity_id: binary_sensor.everything_presence_lite_77baa8_zone_1_occupancy
+    to: 'on'
+    id: approach_trigger
+    trigger: state
+  - entity_id: binary_sensor.everything_presence_lite_77baa8_zone_1_occupancy
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    id: leave_trigger
+    trigger: state
+  - entity_id: sensor.exterior_luminance_illuminance
+    below: 400
+    for: 00:01:00
+    id: low_light_trigger
+    trigger: numeric_state
+  conditions:
+  - condition: or
+    conditions:
     - condition: time
-      after: '09:00:00'
-      before: '22:00:00'
-  action:
-    - service: notify.mobile_app
+      before: 02:00:00
+    - condition: time
+      after: '15:00:00'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: approach_trigger
+      - condition: numeric_state
+        entity_id: sensor.exterior_luminance_illuminance
+        below: 400
+      - condition: template
+        value_template: '{{ states(''input_select.modo'') != ''Noche'' }}'
+      sequence:
+      - target:
+          entity_id: input_boolean.luz_habitacion
+        action: input_boolean.turn_on
+        data: {}
+    - conditions:
+      - condition: trigger
+        id: leave_trigger
+      - condition: state
+        entity_id: binary_sensor.bed_presence_f552d0_bed_occupied_either
+        state: 'off'
+      sequence:
+      - target:
+          entity_id: input_boolean.luz_habitacion
+        action: input_boolean.turn_off
+        data: {}
+    - conditions:
+      - condition: trigger
+        id: low_light_trigger
+      - condition: template
+        value_template: '{{ is_state(''binary_sensor.everything_presence_lite_77baa8_zone_1_occupancy'',
+          ''on'') }}'
+      - condition: template
+        value_template: '{{ states(''input_select.modo'') != ''Noche'' }}'
+      sequence:
+      - target:
+          entity_id: input_boolean.luz_habitacion
+        action: input_boolean.turn_on
+        data: {}
+    default: []
+  mode: single
+- id: '1728123733538'
+  alias: telegram_assist_bot
+  description: ''
+  use_blueprint:
+    path: marc-romu/telegram-bot--conversation.yaml
+    input:
+      conversation_agent: conversation.openai_conversation
+      filter_chat_id:
+      - '-621682448'
+      filter_user_id:
+      - '730947207'
+- id: '1729184732491'
+  alias: Everything-pilot
+  description: ''
+  triggers:
+  - entity_id: binary_sensor.everything_presence_lite_77baa8_zone_2_occupancy
+    to: 'on'
+    trigger: state
+  - entity_id: binary_sensor.everything_presence_lite_77baa8_zone_2_occupancy
+    to: 'off'
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.everything_presence_lite_77baa8_zone_2_occupancy
+        state: 'on'
+      sequence:
+      - data: {}
+        action: light.turn_on
+        target:
+          entity_id: light.everything_presence_lite_77baa8_esp32_led
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.everything_presence_lite_77baa8_zone_2_occupancy
+        state: 'off'
+      sequence:
+      - data: {}
+        action: light.turn_off
+        target:
+          entity_id: light.everything_presence_lite_77baa8_esp32_led
+  mode: single
+- id: '1732233026329'
+  alias: habitacion_ventilador_auto_cama
+  description: Control automático del ventilador basado en presencia y temperatura.
+  triggers:
+  - entity_id:
+    - binary_sensor.bed_presence_f552d0_bed_occupied_either
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 20
+    trigger: state
+  - entity_id: sensor.habitacion_temperatura_humedad_temperature
+    above: 18
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    trigger: numeric_state
+  - entity_id: sensor.habitacion_temperatura_humedad_temperature
+    below: 18
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ is_bed_occupied and room_temperature > 18 and not is_fan_on
+          }}'
+      sequence:
+      - target:
+          entity_id: fan.ventilador_habitacion
+        action: fan.turn_on
+        data: {}
+    - conditions:
+      - condition: template
+        value_template: '{{ (not is_bed_occupied or room_temperature < 18) and is_fan_on
+          }}'
+      sequence:
+      - target:
+          entity_id: fan.ventilador_habitacion
+        action: fan.turn_off
+        data: {}
+    default: []
+  variables:
+    is_bed_occupied: '{{ is_state(''binary_sensor.bed_presence_f552d0_bed_occupied_either'',
+      ''on'') }}'
+    room_temperature: '{{ states(''sensor.habitacion_temperatura_humedad_temperature'')
+      | float }}'
+    is_fan_on: '{{ is_state(''fan.ventilador_habitacion'', ''on'') }}'
+  mode: single
+- id: '1736159784089'
+  alias: Dormitorio - Botón Mesita
+  description: Control del ventilador y modos de la casa con notificación de voz
+  use_blueprint:
+    path: foglietti/xiaomi_mi_wireless_switch_WXKG01LM_z2m.yaml
+    input:
+      mqtt_topic: zigbee2mqtt/habitacion_boton_mesita
+      helper_last_controller_event: input_text.boton_mesita_helper
+      single:
+      - target:
+          entity_id: fan.ventilador_habitacion
+        action: fan.toggle
+        data: {}
+      double:
+      - target:
+          entity_id: input_select.modo
+        data:
+          option: "{% if is_state('input_select.modo', 'Noche') %}\n  En casa\n{%
+            else %}\n  Noche\n{% endif %}\n"
+        action: input_select.select_option
+      - target:
+          entity_id:
+          - tts.piper
+        data:
+          cache: true
+          media_player_entity_id: media_player.dormitorio_sonos
+          message: "{% if is_state('input_select.modo', 'Noche') %}\n  Modo Noche
+            activado              \n{% else %}\n  Modo En casa activado\n{% endif
+            %}\n"
+        action: tts.speak
+      hold:
+      - target:
+          entity_id: script.comprobar_cocina
+        action: script.turn_on
+        data: {}
+- id: '1736291442238'
+  alias: boton_despacho
+  description: ''
+  use_blueprint:
+    path: foglietti/xiaomi_mi_wireless_switch_WXKG01LM_z2m.yaml
+    input:
+      mqtt_topic: zigbee2mqtt/boton_ordenador
+      helper_last_controller_event: input_text.boton_ordenador_helper
+      single:
+      - action: fan.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: fan.ventilador_despacho
+      double:
+      - action: switch.toggle
+        target:
+          entity_id: switch.pantallas
+        data: {}
+- id: '1736934450771'
+  alias: reunido_cam
+  description: ''
+  triggers:
+  - entity_id: sensor.mac_4415_active_camera
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ states(''sensor.mac_4415_active_camera'') != ''Inactive''
+          }}'
+      sequence:
+      - target:
+          entity_id: input_boolean.reunido
+        action: input_boolean.turn_on
+    - conditions:
+      - condition: template
+        value_template: '{{ states(''sensor.mac_4415_active_camera'') == ''Inactive''
+          }}'
+      sequence:
+      - target:
+          entity_id: input_boolean.reunido
+        action: input_boolean.turn_off
+    default: []
+  mode: single
+- id: '1740347997533'
+  alias: mobile app updater
+  description: ''
+  triggers:
+  - minutes: /20
+    trigger: time_pattern
+  actions:
+  - target:
+      entity_id: input_boolean.app_updater
+    action: input_boolean.toggle
+  mode: single
+- id: '1741980778994'
+  alias: 'Alerta congelador: Puerta abierta High Priority'
+  description: Notifica si la potencia supera 40W durante más de 30 minutos, indicando
+    posible puerta abierta
+  triggers:
+  - entity_id: sensor.enchufe_congelador_power
+    above: 40
+    for: 00:30:00
+    trigger: numeric_state
+  actions:
+  - data:
+      message: ⚠️ ¡Alerta! Puede que el congelador tenga la puerta abierta. ⚠️
       data:
-        title: "Low Battery Alert"
-        message: "Your phone battery is at {{ states('sensor.phone_battery_level') }}%"
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+    action: notify.mobile_app_iphone_16_pro
+  mode: single
+- id: '1741980946777'
+  alias: 'Alerta nevera: Puerta abierta High Priority'
+  description: Notifica si la potencia supera 40W durante más de 20 minutos, indicando
+    posible puerta abierta
+  triggers:
+  - entity_id:
+    - sensor.enchufe_nevera_power
+    above: 40
+    for:
+      hours: 0
+      minutes: 50
+      seconds: 0
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - data:
+      message: ⚠️ ¡Alerta! Puede que la nevera tenga la puerta abierta. ⚠️
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+    action: notify.mobile_app_iphone_16_pro
+  mode: single
+- id: '1741981638307'
+  alias: 'Lavadora: Fin del lavado'
+  description: Notifica cuando sensor.enchufe_lavadora_power muestra 0 durante 1 minuto
+  triggers:
+  - entity_id: sensor.enchufe_lavadora_power
+    below: 1
+    for: 00:01:00
+    trigger: numeric_state
+  actions:
+  - data:
+      message: "\U0001F680 Lavadora ha acabado."
+    action: notify.mobile_app_iphone_16_pro
+  mode: single
+- id: '1741981719007'
+  alias: 'Lavavajillas: Fin del ciclo'
+  description: Notifica cuando sensor.enchufe_lavavajillas_power muestra 0 durante
+    1 minuto
+  triggers:
+  - entity_id: sensor.enchufe_lavavajillas_power
+    below: 1
+    for: 00:01:00
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - data:
+      message: "\U0001F680 Lavavajillas ha acabado."
+    action: notify.mobile_app_iphone_16_pro
+  mode: single
+- id: '1745599726655'
+  alias: home assistant on start
+  description: ''
+  triggers:
+  - trigger: homeassistant
+    event: start
+  conditions: []
+  actions:
+  - action: script.fan_habitacion_light_toggle
+    metadata: {}
+    data: {}
+    enabled: false
+  mode: single
+- id: '1754752078246'
+  alias: Printer operational notification
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - sensor.octoprint_current_state
+    from: Printing
+    to: Operational
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  conditions: []
+  actions:
+  - action: telegram_bot.send_message
+    metadata: {}
+    data:
+      config_entry_id: 01JZXHCW7AVS98X2EQE6CNGSB0
+      message: La impresora ha acabado
+  mode: single
+- id: '1754860450846'
+  alias: Power Outage Notification
+  description: This automation triggers a notification to your mobile app immediately
+    when a power outage is detected, ensuring you're informed without delay.
+  triggers:
+  - trigger: state
+    entity_id:
+    - sensor.ups_status_data
+    to: OB DISCHRG
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  conditions: []
+  actions:
+  - action: notify.mobile_app_iphone_16_pro
+    metadata: {}
+    data:
+      message: "\U0001F6A8 Luz - Se ha ido la luz en casa"
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+  mode: single

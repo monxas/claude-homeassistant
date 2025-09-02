@@ -1,0 +1,23 @@
+-== Watchman Report ==- 
+
+-== Missing 1 service(s) from 35 found in your config:
++--------------------------------+---------+--------------------------------------------------------------+
+| Service ID                     | State   | Location                                                     |
++--------------------------------+---------+--------------------------------------------------------------+
+| tado.set_climate_temperature_o | missing | blueprints/automation/panhans/heating_control.yaml:523       |
+| ffset                          |         |                                                              |
++--------------------------------+---------+--------------------------------------------------------------+
+
+-== Missing 3 entity(ies) from 43 found in your config:
++--------------------------------+---------+--------------------------------------------------------------+
+| Entity ID                      | State   | Location                                                     |
++--------------------------------+---------+--------------------------------------------------------------+
+| binary_sensor.octoprint_printi | unavail | automations.yaml:497                                         |
+| ng                             |         |                                                              |
+| button.comelit_open_main_door  | unknown | scripts.yaml:129,143,164                                     |
+| button.comelit_turn_on_video   | unknown | scripts.yaml:153                                             |
++--------------------------------+---------+--------------------------------------------------------------+
+
+-== Report created on 26 Mar 2024 22:36:51
+-== Parsed 34 files in 0.07s., ignored 0 files 
+-== Generated in: 0.00s. Validated in: 0.00s.

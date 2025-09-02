@@ -1,0 +1,30 @@
+- platform: template
+  fans:
+    ventilador_despacho:
+      unique_id: ventilador_despacho
+      friendly_name: "Ventilador depacho"
+      value_template:
+        "{{ states('switch.despacho_plug_ventilador_outlet') }}"
+        # "{{ 'on' if states('sensor.plug_ventilador_power') | float > 10 else 'off' }}" para controlar potencia
+#     oscillating_template: "{{ states('input_boolean.fan_is_oscillating') }}"
+      turn_on:
+        service: script.fan_on
+      turn_off:
+        service: script.fan_off
+#     set_oscillating:
+#       service: script.fan_oscillate_toggle
+#       data:
+#         oscillating: "{{ states('input_boolean.fan_is_oscillating') }}"
+
+
+# ventilador habitacion
+    ventilador_habitacion:
+      unique_id: ventilador_habitacion
+      friendly_name: "Ventilador habitacion"
+      turn_on:
+        service: script.fan_habitacion_toggle      
+      turn_off:
+        service: script.fan_habitacion_toggle     
+      value_template: 
+        "{{ states('input_boolean.fan_habitacion_state') }}"
+        
